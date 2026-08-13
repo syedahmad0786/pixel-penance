@@ -1,4 +1,4 @@
-import { HISTORY_CAP, json, loadState } from "./_lib";
+import { HISTORY_CAP, json, loadState } from "../lib/penance";
 
 export async function GET(): Promise<Response> {
   try {

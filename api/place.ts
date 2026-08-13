@@ -1,4 +1,4 @@
-import { applyPlace, json, mutate, parsePlace, visitorKey } from "./_lib";
+import { applyPlace, json, mutate, parsePlace, visitorKey } from "../lib/penance";
 
 export async function POST(req: Request): Promise<Response> {
   try {
@@ -10,7 +10,7 @@ export async function POST(req: Request): Promise<Response> {
     }
     const body = parsePlace(raw);
     if (!body) return json({ error: "invalid" }, 400);
-    const key = await visitorKey(req);
+    const key = visitorKey(req);
     const result = await mutate((state) => applyPlace(state, key, body));
     if (!result.ok) return json({ error: "cooldown", remaining: result.remaining }, 429);
     return json({

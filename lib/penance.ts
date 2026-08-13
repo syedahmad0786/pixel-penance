@@ -163,21 +163,16 @@ export function json(data: unknown, status = 200): Response {
   });
 }
 
-function hex16(buf: ArrayBuffer): string {
-  return [...new Uint8Array(buf)]
-    .slice(0, 8)
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-export async function visitorKey(req: Request): Promise<string> {
+export function visitorKey(req: Request): string {
   const fwd = req.headers.get("x-forwarded-for") ?? "";
   const ip = fwd.split(",")[0]?.trim() || "anon";
-  const buf = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(`pixel-penance:${ip}`),
-  );
-  return hex16(buf);
+  const s = `pixel-penance:${ip}`;
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i += 1) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0).toString(16);
 }
 
 export function remainingMs(state: PenanceState, key: string): number {
@@ -222,46 +217,6 @@ export function applyPlace(
   return { ok: true, remaining: COOLDOWN_MS, x: body.x, y: body.y, color: body.color };
 }
 
-function parseState(raw: unknown): PenanceState | null {
-  if (!raw || typeof raw !== "object") return null;
-  const o = raw as Partial<PenanceState>;
-  if (!Array.isArray(o.pixels) || o.pixels.length !== WIDTH * HEIGHT) return null;
-  const pixels = o.pixels.map((n) =>
-    Number.isInteger(n) && n >= 0 && n < PALETTE.length ? n : BEIGE,
-  );
-  const history = Array.isArray(o.history) ? o.history.slice(-HISTORY_CAP) : [];
-  const cooldowns =
-    o.cooldowns && typeof o.cooldowns === "object" && !Array.isArray(o.cooldowns)
-      ? o.cooldowns
-      : {};
-  return { pixels, history, cooldowns };
-}
-
-function env(name: string): string | undefined {
-  const proc = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process;
-  return proc?.env?.[name];
-}
-
-async function readBlob(): Promise<PenanceState | null> {
-  const { list } = await import("@vercel/blob");
-  const { blobs } = await list({ prefix: "penance", limit: 1 });
-  const url = blobs[0]?.url;
-  if (!url) return null;
-  const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) return null;
-  return parseState((await res.json()) as unknown);
-}
-
-async function writeBlob(state: PenanceState): Promise<void> {
-  const { put } = await import("@vercel/blob");
-  await put("penance.json", JSON.stringify(state), {
-    access: "public",
-    addRandomSuffix: false,
-    allowOverwrite: true,
-    contentType: "application/json",
-  });
-}
-
 function memoryState(): PenanceState {
   const g = globalThis as PenanceGlobal;
   if (!g.__penanceState) g.__penanceState = emptyState();
@@ -269,32 +224,11 @@ function memoryState(): PenanceState {
 }
 
 export async function loadState(): Promise<PenanceState> {
-  if (env("BLOB_READ_WRITE_TOKEN")) {
-    try {
-      const loaded = await readBlob();
-      if (loaded) {
-        (globalThis as PenanceGlobal).__penanceState = loaded;
-        return loaded;
-      }
-      const seeded = emptyState();
-      await writeBlob(seeded);
-      (globalThis as PenanceGlobal).__penanceState = seeded;
-      return seeded;
-    } catch (err) {
-      console.error("penance blob load failed", err);
-    }
-  }
   return memoryState();
 }
 
 export async function saveState(state: PenanceState): Promise<void> {
   (globalThis as PenanceGlobal).__penanceState = state;
-  if (!env("BLOB_READ_WRITE_TOKEN")) return;
-  try {
-    await writeBlob(state);
-  } catch (err) {
-    console.error("penance blob save failed", err);
-  }
 }
 
 function enqueue<T>(fn: () => Promise<T>): Promise<T> {

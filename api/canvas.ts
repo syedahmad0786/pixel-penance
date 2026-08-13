@@ -7,12 +7,12 @@ import {
   loadState,
   remainingMs,
   visitorKey,
-} from "./_lib";
+} from "../lib/penance";
 
 export async function GET(req: Request): Promise<Response> {
   try {
     const state = await loadState();
-    const key = await visitorKey(req);
+    const key = visitorKey(req);
     return json({
       width: WIDTH,
       height: HEIGHT,
