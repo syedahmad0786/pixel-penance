@@ -1,5 +1,11 @@
 # pixel-penance — STATUS
 
+## 2026-08-13 — live
+
+- Live: https://pixel-penance.vercel.app
+- Repo: https://github.com/syedahmad0786/pixel-penance
+
+
 ## 2026-08-13
 
 - Built Pixel Penance (FT–016): Vite 6 + vanilla TS parish bulletin, 128×128 / 16-colour slow canvas, candle cooldown, PNG rubbing, ledger ticker, webring. API under `api/` with Blob → KV → memory + seeded founding nave.

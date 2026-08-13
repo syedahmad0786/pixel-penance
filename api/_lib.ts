@@ -242,18 +242,14 @@ function env(name: string): string | undefined {
   return proc?.env?.[name];
 }
 
-function hasKvEnv(): boolean {
-  return Boolean(env("KV_REST_API_URL") || env("KV_URL") || env("UPSTASH_REDIS_REST_URL"));
-}
-
 async function readBlob(): Promise<PenanceState | null> {
-  const { get } = await import("@vercel/blob");
-  const result = await get("penance.json", { access: "public", useCache: false });
-  if (!result || result.statusCode !== 200 || !result.stream) return null;
-  const text = await new Response(result.stream).text();
-  const parsed = parseState(JSON.parse(text) as unknown);
-  if (!parsed) throw new Error("penance.json is not a 128×128 canvas");
-  return parsed;
+  const { list } = await import("@vercel/blob");
+  const { blobs } = await list({ prefix: "penance", limit: 1 });
+  const url = blobs[0]?.url;
+  if (!url) return null;
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) return null;
+  return parseState((await res.json()) as unknown);
 }
 
 async function writeBlob(state: PenanceState): Promise<void> {
@@ -263,18 +259,7 @@ async function writeBlob(state: PenanceState): Promise<void> {
     addRandomSuffix: false,
     allowOverwrite: true,
     contentType: "application/json",
-    token: env("BLOB_READ_WRITE_TOKEN"),
   });
-}
-
-async function readKv(): Promise<PenanceState | null> {
-  const { kv } = await import("@vercel/kv");
-  return parseState(await kv.get("penance"));
-}
-
-async function writeKv(state: PenanceState): Promise<void> {
-  const { kv } = await import("@vercel/kv");
-  await kv.set("penance", state);
 }
 
 function memoryState(): PenanceState {
@@ -287,23 +272,16 @@ export async function loadState(): Promise<PenanceState> {
   if (env("BLOB_READ_WRITE_TOKEN")) {
     try {
       const loaded = await readBlob();
-      if (loaded) return loaded;
+      if (loaded) {
+        (globalThis as PenanceGlobal).__penanceState = loaded;
+        return loaded;
+      }
       const seeded = emptyState();
       await writeBlob(seeded);
+      (globalThis as PenanceGlobal).__penanceState = seeded;
       return seeded;
     } catch (err) {
       console.error("penance blob load failed", err);
-    }
-  }
-  if (hasKvEnv()) {
-    try {
-      const loaded = await readKv();
-      if (loaded) return loaded;
-      const seeded = emptyState();
-      await writeKv(seeded);
-      return seeded;
-    } catch (err) {
-      console.error("penance kv load failed", err);
     }
   }
   return memoryState();
@@ -311,21 +289,11 @@ export async function loadState(): Promise<PenanceState> {
 
 export async function saveState(state: PenanceState): Promise<void> {
   (globalThis as PenanceGlobal).__penanceState = state;
-  if (env("BLOB_READ_WRITE_TOKEN")) {
-    try {
-      await writeBlob(state);
-      return;
-    } catch (err) {
-      console.error("penance blob save failed", err);
-    }
-  }
-  if (hasKvEnv()) {
-    try {
-      await writeKv(state);
-      return;
-    } catch (err) {
-      console.error("penance kv save failed", err);
-    }
+  if (!env("BLOB_READ_WRITE_TOKEN")) return;
+  try {
+    await writeBlob(state);
+  } catch (err) {
+    console.error("penance blob save failed", err);
   }
 }
 

@@ -1,13 +1,33 @@
-import { HEIGHT, PALETTE, WIDTH, json, loadState, remainingMs, visitorKey } from "./_lib";
+import {
+  HEIGHT,
+  PALETTE,
+  WIDTH,
+  emptyState,
+  json,
+  loadState,
+  remainingMs,
+  visitorKey,
+} from "./_lib";
 
 export async function GET(req: Request): Promise<Response> {
-  const state = await loadState();
-  const key = await visitorKey(req);
-  return json({
-    width: WIDTH,
-    height: HEIGHT,
-    palette: PALETTE,
-    pixels: state.pixels,
-    remaining: remainingMs(state, key),
-  });
+  try {
+    const state = await loadState();
+    const key = await visitorKey(req);
+    return json({
+      width: WIDTH,
+      height: HEIGHT,
+      palette: PALETTE,
+      pixels: state.pixels,
+      remaining: remainingMs(state, key),
+    });
+  } catch (err) {
+    console.error("canvas GET", err);
+    return json({
+      width: WIDTH,
+      height: HEIGHT,
+      palette: PALETTE,
+      pixels: emptyState().pixels,
+      remaining: 0,
+    });
+  }
 }
