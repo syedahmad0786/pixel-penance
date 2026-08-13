@@ -1,0 +1,90 @@
+/* Fun Toys design-kit — grain, vignette, 3D stage, overlay-safe hidden, focus. */
+
+.ft-grain,
+.ft-paper-tooth {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: var(--ft-z-grain, 40);
+}
+
+.ft-grain {
+  opacity: 0.11;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
+}
+
+.ft-paper-tooth {
+  opacity: 0.18;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23p)' opacity='.35'/%3E%3C/svg%3E");
+}
+
+.ft-vignette {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: var(--ft-z-vignette, 38);
+  background:
+    radial-gradient(120% 90% at 50% 40%, transparent 40%, rgba(0, 0, 0, 0.38) 100%);
+}
+
+.ft-stage {
+  perspective: 1200px;
+  perspective-origin: 50% 40%;
+}
+
+.ft-preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.ft-tilt {
+  transform-style: preserve-3d;
+  will-change: transform;
+  transition: transform var(--ft-dur-short, 280ms) var(--ft-ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.ft-mark {
+  display: block;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+}
+
+.ft-mark--lg {
+  width: 64px;
+  height: 64px;
+}
+
+.ft-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ft-focus, currentColor);
+  outline-offset: 3px;
+}
+
+/* Overlay-safe hidden. [hidden]{display:none} loses to display:grid.
+   Pattern: default display:none, then :not([hidden]) restores the layout. */
+.ft-overlay {
+  display: none;
+}
+
+.ft-overlay:not([hidden]) {
+  display: grid;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ft-tilt {
+    transition: none;
+    transform: none !important;
+  }
+
+  .ft-grain,
+  .ft-paper-tooth {
+    opacity: 0.04;
+  }
+}

@@ -1,4 +1,6 @@
 import "./style.css";
+import { animate } from "motion";
+import { bindTilt, reducedMotion } from "./studio";
 import {
   COOLDOWN_MS,
   HEIGHT,
@@ -383,5 +385,10 @@ async function boot(): Promise<void> {
   setInterval(tickCandle, 250);
   tickCandle();
 }
+
+if (!reducedMotion()) {
+  animate(".sheet", { opacity: [0, 1], y: [14, 0] }, { duration: 0.6 });
+}
+bindTilt(document.querySelector(".sheet"), 5, 12);
 
 void boot();

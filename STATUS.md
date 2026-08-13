@@ -1,5 +1,9 @@
 # pixel-penance — STATUS
 
+## 2026-08-14 � premium studio look
+
+Letterpressed sheet 3D lift, nave canvas frame, Motion One, logo/favicons. Cooldown unchanged. Reduced motion disables heavy 3D. Webring: https://fun-toys-alpha.vercel.app
+
 ## 2026-08-13 — API 500 fix
 
 - `/api/canvas|history|waiting|place` returned FUNCTION_INVOCATION_FAILED (optional `@vercel/blob` + invalid `get()`). Blob is now a real dependency; load uses `list`+fetch; handlers catch and fall back to the founding floor.

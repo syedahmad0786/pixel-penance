@@ -1,0 +1,36 @@
+/* Fun Toys design-kit — motion + depth tokens.
+   Copy into a toy, then override colors locally. Never Inter/Roboto/Arial as hero. */
+
+:root {
+  --ft-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ft-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ft-ease-press: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ft-dur-micro: 140ms;
+  --ft-dur-short: 280ms;
+  --ft-dur-med: 520ms;
+  --ft-dur-long: 900ms;
+  --ft-dur-cinema: 1400ms;
+  --ft-z-grain: 40;
+  --ft-z-vignette: 38;
+  --ft-z-overlay: 80;
+  --ft-focus: color-mix(in srgb, currentColor 70%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --ft-dur-micro: 1ms;
+    --ft-dur-short: 1ms;
+    --ft-dur-med: 1ms;
+    --ft-dur-long: 1ms;
+    --ft-dur-cinema: 1ms;
+  }
+
+  html:not(.ft-allow-essential) *,
+  html:not(.ft-allow-essential) *::before,
+  html:not(.ft-allow-essential) *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}
